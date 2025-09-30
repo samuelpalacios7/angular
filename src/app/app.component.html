@@ -1,0 +1,32 @@
+
+<main class="main-bg">
+  <section class="side-panel">
+    <h2 class="vertical-title">{{ titulo }}</h2>
+    <div class="date-block">
+      <span class="fecha-linea">{{ fechaActual | date:'shortDate' }}</span>
+      <span class="hora-linea">{{ fechaActual | date:'shortTime' }}</span>
+    </div>
+    <button (click)="toggleLista()" class="btn-side-toggle">
+      {{ mostrarLista ? 'Esconder' : 'Ver' }} lista
+    </button>
+  </section>
+
+  <section class="content-panel">
+    <div *ngIf="mostrarLista" class="productos-lista-nueva">
+      <h3>Productos <span class="badge">{{ productos.length }}</span></h3>
+      <ul class="productos-lista-ul">
+        <li *ngFor="let producto of productos; let i = index">
+          <app-producto-card [nombreProducto]="producto" [indice]="i"></app-producto-card>
+        </li>
+      </ul>
+    </div>
+
+    <form class="nuevo-form" (ngSubmit)="agregarProducto()">
+      <label for="nuevoProducto">Nuevo producto:</label>
+      <div class="nuevo-form-row">
+        <input id="nuevoProducto" type="text" [(ngModel)]="nuevoProducto" name="nuevoProducto" placeholder="Ej: Audífonos Bluetooth" class="nuevo-input" autocomplete="off">
+        <button type="submit" class="nuevo-btn">Añadir</button>
+      </div>
+    </form>
+  </section>
+</main>

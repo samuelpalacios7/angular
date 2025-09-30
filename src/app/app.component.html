@@ -6,27 +6,100 @@
       <span class="fecha-linea">{{ fechaActual | date:'shortDate' }}</span>
       <span class="hora-linea">{{ fechaActual | date:'shortTime' }}</span>
     </div>
-    <button (click)="toggleLista()" class="btn-side-toggle">
-      {{ mostrarLista ? 'Esconder' : 'Ver' }} lista
-    </button>
   </section>
 
   <section class="content-panel">
-    <div *ngIf="mostrarLista" class="productos-lista-nueva">
-      <h3>Productos <span class="badge">{{ productos.length }}</span></h3>
-      <ul class="productos-lista-ul">
-        <li *ngFor="let producto of productos; let i = index">
-          <app-producto-card [nombreProducto]="producto" [indice]="i"></app-producto-card>
-        </li>
-      </ul>
-    </div>
+    <!-- Login -->
+    <form *ngIf="mostrarLogin && !autenticado" [formGroup]="loginForm" (ngSubmit)="onLogin()" class="nuevo-form" novalidate>
+      <label for="loginEmail">Email:</label>
+      <input id="loginEmail" type="email" formControlName="email" class="nuevo-input" [ngClass]="{'is-invalid': loginSubmitted && lf['email'].invalid}" autocomplete="off">
+      <div *ngIf="loginSubmitted && lf['email'].errors">
+        <small class="text-danger" *ngIf="lf['email'].errors['required']">El email es obligatorio.</small>
+        <small class="text-danger" *ngIf="lf['email'].errors['email']">Formato de email inválido.</small>
+      </div>
 
-    <form class="nuevo-form" (ngSubmit)="agregarProducto()">
-      <label for="nuevoProducto">Nuevo producto:</label>
-      <div class="nuevo-form-row">
-        <input id="nuevoProducto" type="text" [(ngModel)]="nuevoProducto" name="nuevoProducto" placeholder="Ej: Audífonos Bluetooth" class="nuevo-input" autocomplete="off">
-        <button type="submit" class="nuevo-btn">Añadir</button>
+      <label for="loginPassword">Contraseña:</label>
+      <input id="loginPassword" type="password" formControlName="password" class="nuevo-input" [ngClass]="{'is-invalid': loginSubmitted && lf['password'].invalid}" autocomplete="off">
+      <div *ngIf="loginSubmitted && lf['password'].errors">
+        <small class="text-danger" *ngIf="lf['password'].errors['required']">La contraseña es obligatoria.</small>
+        <small class="text-danger" *ngIf="lf['password'].errors['minlength']">Mínimo 6 caracteres.</small>
+      </div>
+
+      <div *ngIf="loginError">
+        <small class="text-danger">{{ loginError }}</small>
+      </div>
+
+      <button type="submit" class="nuevo-btn">Iniciar Sesión</button>
+      <div style="margin-top:10px;">
+        <a href="#" (click)="irARegistro(); $event.preventDefault()">¿No tienes cuenta? Regístrate</a>
       </div>
     </form>
+
+    <!-- Registro -->
+    <form *ngIf="!mostrarLogin && !autenticado" [formGroup]="registroForm" (ngSubmit)="onSubmit()" class="nuevo-form" novalidate>
+      <label for="nombre">Nombre:</label>
+      <input id="nombre" type="text" formControlName="nombre" class="nuevo-input" [ngClass]="{'is-invalid': submitted && f['nombre'].invalid}" autocomplete="off">
+      <div *ngIf="submitted && f['nombre'].errors">
+        <small class="text-danger" *ngIf="f['nombre'].errors['required']">El nombre es obligatorio.</small>
+        <small class="text-danger" *ngIf="f['nombre'].errors['minlength']">Mínimo 2 caracteres.</small>
+      </div>
+
+      <label for="apellido">Apellido:</label>
+      <input id="apellido" type="text" formControlName="apellido" class="nuevo-input" [ngClass]="{'is-invalid': submitted && f['apellido'].invalid}" autocomplete="off">
+      <div *ngIf="submitted && f['apellido'].errors">
+        <small class="text-danger" *ngIf="f['apellido'].errors['required']">El apellido es obligatorio.</small>
+        <small class="text-danger" *ngIf="f['apellido'].errors['minlength']">Mínimo 2 caracteres.</small>
+      </div>
+
+      <label for="email">Email:</label>
+      <input id="email" type="email" formControlName="email" class="nuevo-input" [ngClass]="{'is-invalid': submitted && f['email'].invalid}" autocomplete="off">
+      <div *ngIf="submitted && f['email'].errors">
+        <small class="text-danger" *ngIf="f['email'].errors['required']">El email es obligatorio.</small>
+        <small class="text-danger" *ngIf="f['email'].errors['email']">Formato de email inválido.</small>
+      </div>
+
+      <label for="password">Contraseña:</label>
+      <input id="password" type="password" formControlName="password" class="nuevo-input" [ngClass]="{'is-invalid': submitted && f['password'].invalid}" autocomplete="off">
+      <div *ngIf="submitted && f['password'].errors">
+        <small class="text-danger" *ngIf="f['password'].errors['required']">La contraseña es obligatoria.</small>
+        <small class="text-danger" *ngIf="f['password'].errors['minlength']">Mínimo 6 caracteres.</small>
+      </div>
+
+      <button type="submit" class="nuevo-btn">Registrarse</button>
+      <div style="margin-top:10px;">
+        <a href="#" (click)="irALogin(); $event.preventDefault()">¿Ya tienes cuenta? Inicia sesión</a>
+      </div>
+    </form>
+
+    <!-- Productos (solo si autenticado) -->
+    <div *ngIf="autenticado">
+      <div style="display:flex; justify-content:space-between; align-items:center; width:100%; max-width:500px;">
+        <h3>Bienvenido, {{ usuarioActual }} <span class="badge">{{ productos.length }}</span></h3>
+        <button (click)="logout()" class="nuevo-btn" style="background:#ff4d4f; margin-left:10px;">Cerrar sesión</button>
+      </div>
+      <ul class="productos-lista-ul">
+        <li *ngFor="let producto of productos; let i = index">
+          <div style="display:flex; align-items:center; gap:10px; width:100%;">
+            <ng-container *ngIf="editandoIndex !== i; else editando">
+              <app-producto-card [nombreProducto]="producto" [indice]="i"></app-producto-card>
+              <button class="nuevo-btn" style="padding:6px 12px; font-size:0.95em; background:#ffd600; color:#222;" (click)="editarProducto(i)">Editar</button>
+              <button class="nuevo-btn" style="padding:6px 12px; font-size:0.95em; background:#ff4d4f;" (click)="eliminarProducto(i)">Eliminar</button>
+            </ng-container>
+            <ng-template #editando>
+              <input type="text" [(ngModel)]="productoEditado" class="nuevo-input" style="flex:1; margin-right:8px;">
+              <button class="nuevo-btn" style="padding:6px 12px; font-size:0.95em; background:#4caf50;" (click)="guardarEdicionProducto(i)">Guardar</button>
+              <button class="nuevo-btn" style="padding:6px 12px; font-size:0.95em; background:#bdbdbd; color:#222;" (click)="cancelarEdicion()">Cancelar</button>
+            </ng-template>
+          </div>
+        </li>
+      </ul>
+      <form class="nuevo-form" (ngSubmit)="agregarProducto()" style="margin-top:20px;">
+        <label for="nuevoProducto">Nuevo producto:</label>
+        <div class="nuevo-form-row">
+          <input id="nuevoProducto" type="text" [(ngModel)]="nuevoProducto" name="nuevoProducto" placeholder="Ej: Audífonos Bluetooth" class="nuevo-input" autocomplete="off">
+          <button type="submit" class="nuevo-btn">Añadir</button>
+        </div>
+      </form>
+    </div>
   </section>
 </main>
